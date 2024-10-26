@@ -24,9 +24,10 @@ export const useReminderStorage = () => {
     try {
       const storedList = await AsyncStorage.getItem(STORAGE_KEY);
       const currentList: Reminder[] = storedList ? JSON.parse(storedList) : [];
-      const updatedList = [...currentList, { ...newItem }];
+      const updatedList = [...currentList, newItem];
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
       showModal("Item adicionado com sucesso!", "success");
+      console.log("Item adicionado com sucesso!", "success");
     } catch (error) {
       console.error("Erro ao adicionar item à lista:", error);
       showModal("Erro ao adicionar item à lista.", "error");
@@ -36,6 +37,7 @@ export const useReminderStorage = () => {
   const getList = async (): Promise<Reminder[]> => {
     try {
       const storedList = await AsyncStorage.getItem(STORAGE_KEY);
+      console.log("lista consultada com sucesso!", "success");
       return storedList ? JSON.parse(storedList) : [];
     } catch (error) {
       console.error("Erro ao recuperar lista do armazenamento:", error);
@@ -51,6 +53,7 @@ export const useReminderStorage = () => {
       const updatedList = currentList.filter((item) => item.id !== id);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
       showModal("Item removido com sucesso!", "success");
+      console.log("Item removido com sucesso!", "success");
     } catch (error) {
       console.error("Erro ao remover item da lista:", error);
       showModal("Erro ao remover item da lista.", "error");
@@ -69,6 +72,7 @@ export const useReminderStorage = () => {
       );
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
       showModal("Item atualizado com sucesso!", "success");
+      console.log("Item atualizado com sucesso!", "success");
     } catch (error) {
       console.error("Erro ao atualizar item da lista:", error);
       showModal("Erro ao atualizar item da lista.", "error");
@@ -80,6 +84,7 @@ export const useReminderStorage = () => {
     getList,
     removeFromList,
     updateItem,
+    showModal,
     modalVisible,
     modalMessage,
     modalType,

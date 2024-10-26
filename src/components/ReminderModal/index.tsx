@@ -16,24 +16,16 @@ interface ReminderModalProps {
   visible: boolean;
   onClose: () => void;
   reminder: Reminder | null;
-  onDelete: (a: number) => void;
+  handleStorageChange: () => void;
 }
 
 const ReminderModal = ({
   visible,
   onClose,
   reminder,
-  onDelete,
+  handleStorageChange,
 }: ReminderModalProps) => {
-  const {
-    addToList,
-    getList,
-    modalVisible,
-    modalMessage,
-    modalType,
-    closeModal,
-    NotificationModal,
-  } = useReminderStorage();
+  const { addToList, updateItem, removeFromList } = useReminderStorage();
 
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"conta" | "remedio" | null>();
@@ -43,6 +35,8 @@ const ReminderModal = ({
   const [status, setStatus] = useState<
     "completed" | "waiting" | "missed" | null
   >();
+
+  const [isConfirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   useEffect(() => {
     if (reminder) {
@@ -63,122 +57,190 @@ const ReminderModal = ({
   }, [reminder]);
 
   const handleSave = async () => {
-    await addToList({
-      id: Date.now(),
-      title,
-      type: type || "remedio",
-      date,
-      time: type === "remedio" ? time : undefined,
-      amount: type === "conta" ? amount : undefined,
-      status: status || "waiting",
-    });
+    if (!reminder?.id) {
+      await addToList({
+        id: Date.now(),
+        title,
+        type: type || "remedio",
+        date,
+        time: type === "remedio" ? time : undefined,
+        amount: type === "conta" ? amount : undefined,
+        status: "waiting",
+      });
+    } else {
+      await updateItem(reminder.id, {
+        title,
+        type: type || "remedio",
+        date,
+        time: type === "remedio" ? time : undefined,
+        amount: type === "conta" ? amount : undefined,
+        status: status || "waiting",
+      });
+    }
+    handleStorageChange();
     onClose();
   };
 
+  const handleDelete = () => {
+    setConfirmDeleteVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (reminder?.id) {
+      await removeFromList(reminder.id);
+      handleStorageChange();
+    }
+    setConfirmDeleteVisible(false);
+  };
+
+  const cancelDelete = () => {
+    setConfirmDeleteVisible(false);
+  };
+
   return (
-    <Modal visible={visible} transparent={true} animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>
-            {reminder ? "Gerenciar lembrete" : "Cadastrar novo lembrete"}
-          </Text>
+    <>
+      <Modal visible={visible} transparent={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              {reminder ? "Gerenciar lembrete" : "Cadastrar novo lembrete"}
+            </Text>
 
-          <Text style={styles.label}>Título do lembrete</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Título do lembrete"
-            value={title}
-            onChangeText={setTitle}
-          />
-          <Text style={styles.label}>Tipo</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={type}
-              onValueChange={(itemValue) => setType(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label={"Toque para selecionar"} value={null} />
-              <Picker.Item label="Conta" value="conta" />
-              <Picker.Item label="Remédio" value="remedio" />
-            </Picker>
-          </View>
-
-          {!!type && (
-            <>
-              <Text style={styles.label}>Data (DD/MM/AAAA)</Text>
-              <TextInputMask
-                style={styles.input}
-                value={date}
-                onChangeText={setDate}
-                type={"datetime"}
-                options={{
-                  format: "DD/MM/YYYY",
-                }}
-              />
-
-              {type === "remedio" && (
-                <>
-                  <Text style={styles.label}>Hora (HH:MM)</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={time}
-                    onChangeText={setTime}
-                  />
-                </>
-              )}
-
-              {type === "conta" && (
-                <>
-                  <Text style={styles.label}>Valor (R$)</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={amount}
-                    onChangeText={setAmount}
-                    keyboardType="numeric"
-                  />
-                </>
-              )}
-
-              <Text style={styles.label}>Status</Text>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={status}
-                  onValueChange={(itemValue) => setStatus(itemValue)}
-                  style={styles.picker}
-                >
-                  <Picker.Item label={"Toque para selecionar"} value={null} />
-                  <Picker.Item
-                    label={type === "conta" ? "Paga" : "Tomado"}
-                    value={"completed"}
-                  />
-                  <Picker.Item
-                    label={type === "conta" ? "Não paga" : "Pendente"}
-                    value={"waiting"}
-                  />
-                </Picker>
-              </View>
-            </>
-          )}
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={handleSave} style={styles.button}>
-              <Text style={styles.buttonText}>Salvar</Text>
-            </TouchableOpacity>
-            {reminder?.id && (
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => onDelete(reminder.id || 0)}
-              >
-                <Text style={styles.deleteButtonText}>Excluir lembrete</Text>
-              </TouchableOpacity>
+            <Text style={styles.label}>Título do lembrete</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Título do lembrete"
+              value={title}
+              onChangeText={setTitle}
+            />
+            {!reminder && (
+              <>
+                <Text style={styles.label}>Tipo</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={type}
+                    onValueChange={(itemValue) => setType(itemValue)}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label={"Toque para selecionar"} value={null} />
+                    <Picker.Item label="Conta" value="conta" />
+                    <Picker.Item label="Remédio" value="remedio" />
+                  </Picker>
+                </View>
+              </>
             )}
-            <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
+
+            {!!type && (
+              <>
+                <Text style={styles.label}>Data (DD/MM/AAAA)</Text>
+                <TextInputMask
+                  style={styles.input}
+                  value={date}
+                  onChangeText={setDate}
+                  type={"datetime"}
+                  options={{
+                    format: "DD/MM/YYYY",
+                  }}
+                />
+
+                {type === "remedio" && (
+                  <>
+                    <Text style={styles.label}>Hora (HH:MM)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={time}
+                      onChangeText={setTime}
+                    />
+                  </>
+                )}
+
+                {type === "conta" && (
+                  <>
+                    <Text style={styles.label}>Valor (R$)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={amount}
+                      onChangeText={setAmount}
+                      keyboardType="numeric"
+                    />
+                  </>
+                )}
+                {reminder && (
+                  <>
+                    <Text style={styles.label}>Status</Text>
+                    <View style={styles.pickerContainer}>
+                      <Picker
+                        selectedValue={status}
+                        onValueChange={(itemValue) => setStatus(itemValue)}
+                        style={styles.picker}
+                      >
+                        <Picker.Item
+                          label={"Toque para selecionar"}
+                          value={null}
+                        />
+                        <Picker.Item
+                          label={type === "conta" ? "Paga" : "Tomado"}
+                          value={"completed"}
+                        />
+                        <Picker.Item
+                          label={type === "conta" ? "Não paga" : "Pendente"}
+                          value={"waiting"}
+                        />
+                      </Picker>
+                    </View>
+                  </>
+                )}
+              </>
+            )}
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity onPress={handleSave} style={styles.button}>
+                <Text style={styles.buttonText}>Salvar</Text>
+              </TouchableOpacity>
+              {reminder?.id && (
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={handleDelete}
+                >
+                  <Text style={styles.deleteButtonText}>Excluir lembrete</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
-    </Modal>
+
+        <Modal
+          visible={isConfirmDeleteVisible}
+          transparent={true}
+          animationType="slide"
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.confirmModalContent}>
+              <Text style={styles.confirmTitle}>
+                Tem certeza que deseja excluir este lembrete?
+              </Text>
+              <View style={styles.confirmButtonContainer}>
+                <TouchableOpacity
+                  onPress={confirmDelete}
+                  style={styles.confirmButton}
+                >
+                  <Text style={styles.confirmButtonText}>Excluir</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={cancelDelete}
+                  style={styles.cancelButton}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </Modal>
+    </>
   );
 };
 
@@ -243,6 +305,47 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
+  deleteButton: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#a70000",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  deleteButtonText: {
+    color: "#a70000",
+    fontWeight: "bold",
+  },
+  confirmModalContent: {
+    width: "90%",
+    maxWidth: 300,
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  confirmTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  confirmButtonContainer: {
+    width: "100%",
+    gap: 20,
+  },
+  confirmButton: {
+    backgroundColor: "#a70000",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
   cancelButton: {
     backgroundColor: "#fff",
     padding: 15,
@@ -254,20 +357,6 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: "#005b96",
     fontWeight: "bold",
-  },
-  deleteButton: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "red",
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  deleteButtonText: {
-    color: "red",
-    fontWeight: "bold",
-    fontSize: 14,
-    textAlign: "center",
   },
 });
 

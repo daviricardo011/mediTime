@@ -15,7 +15,7 @@ import { useReminderStorage } from "../../hooks/useReminderStorage";
 import { Reminder } from "../../types";
 
 const HomeScreen = () => {
-  const { getList, removeFromList, updateItem } = useReminderStorage();
+  const { getList, NotificationModal } = useReminderStorage();
   const [selectedTab, setSelectedTab] = useState("Contas");
   const [reminderModal, setReminderModal] = useState(false);
   const [currentReminder, setCurrentReminder] = useState<any>(null);
@@ -23,28 +23,26 @@ const HomeScreen = () => {
   const [bills, setBills] = useState<Reminder[]>([]);
 
   const handleFetchReminders = async () => {
-    const reminders = await getList();
-    console.log("storage");
-    console.log(reminders);
-    const med: Reminder[] = [];
-    const b: Reminder[] = [];
+    try {
+      const reminders = await getList();
+      const medicines: Reminder[] = reminders.filter(
+        (reminder) => reminder.type === "remedio"
+      );
+      const b: Reminder[] = reminders.filter(
+        (reminder) => reminder.type !== "remedio"
+      );
 
-    reminders.forEach((reminder) => {
-      if (reminder.type === "remedio") {
-        med.push(reminder);
-      } else {
-        b.push(reminder);
-      }
-    });
-    setMedicines(med);
-    setBills(b);
+      setMedicines(medicines);
+      setBills(b);
+    } catch (error) {
+      console.error("Erro ao buscar lembretes:", error);
+    }
   };
 
   useEffect(() => {
     handleFetchReminders();
-  }, [reminderModal]);
+  }, []);
 
-  // Função para ordenar os itens pelo mais próximo
   const sortByDate = (a: Reminder, b: Reminder): number => {
     if ("amount" in a && "amount" in b) {
       const aDate = moment(a.date, "DD/MM/YYYY");
@@ -112,8 +110,10 @@ const HomeScreen = () => {
         visible={reminderModal}
         onClose={() => setReminderModal(false)}
         reminder={currentReminder}
-        onDelete={(id: number) => removeFromList(id)}
+        handleStorageChange={handleFetchReminders}
       />
+
+      {NotificationModal}
     </ScrollView>
   );
 };
