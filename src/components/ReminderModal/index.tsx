@@ -9,20 +9,14 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { TextInputMask } from "react-native-masked-text";
-
-interface Reminder {
-  description: string;
-  date: string;
-  time?: string;
-  amount?: string;
-  status: string;
-}
+import { useReminderStorage } from "../../hooks/useReminderStorage";
+import { Reminder } from "../../types";
 
 interface ReminderModalProps {
   visible: boolean;
   onClose: () => void;
   reminder: Reminder | null;
-  onDelete?: () => void;
+  onDelete: (a: number) => void;
 }
 
 const ReminderModal = ({
@@ -31,16 +25,28 @@ const ReminderModal = ({
   reminder,
   onDelete,
 }: ReminderModalProps) => {
+  const {
+    addToList,
+    getList,
+    modalVisible,
+    modalMessage,
+    modalType,
+    closeModal,
+    NotificationModal,
+  } = useReminderStorage();
+
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<string | null>(null);
+  const [type, setType] = useState<"conta" | "remedio" | null>();
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [amount, setAmount] = useState("");
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<
+    "completed" | "waiting" | "missed" | null
+  >();
 
   useEffect(() => {
     if (reminder) {
-      setTitle(reminder.description);
+      setTitle(reminder.title);
       setDate(reminder.date);
       setType(reminder.amount ? "conta" : "remedio");
       setAmount(reminder.amount || "");
@@ -56,14 +62,15 @@ const ReminderModal = ({
     }
   }, [reminder]);
 
-  const handleSave = () => {
-    console.log({
+  const handleSave = async () => {
+    await addToList({
+      id: Date.now(),
       title,
-      type,
+      type: type || "remedio",
       date,
       time: type === "remedio" ? time : undefined,
       amount: type === "conta" ? amount : undefined,
-      status,
+      status: status || "waiting",
     });
     onClose();
   };
@@ -83,7 +90,6 @@ const ReminderModal = ({
             value={title}
             onChangeText={setTitle}
           />
-
           <Text style={styles.label}>Tipo</Text>
           <View style={styles.pickerContainer}>
             <Picker
@@ -143,28 +149,31 @@ const ReminderModal = ({
                   <Picker.Item label={"Toque para selecionar"} value={null} />
                   <Picker.Item
                     label={type === "conta" ? "Paga" : "Tomado"}
-                    value={type === "conta" ? "paid" : "taken"}
+                    value={"completed"}
                   />
                   <Picker.Item
                     label={type === "conta" ? "Não paga" : "Pendente"}
-                    value={type === "conta" ? "unpaid" : "waiting"}
+                    value={"waiting"}
                   />
                 </Picker>
               </View>
             </>
           )}
 
-          {reminder && (
-            <TouchableOpacity onPress={onDelete}>
-              <Text style={styles.deleteButtonText}>Excluir lembrete</Text>
-            </TouchableOpacity>
-          )}
           <View style={styles.buttonContainer}>
             <TouchableOpacity onPress={handleSave} style={styles.button}>
               <Text style={styles.buttonText}>Salvar</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={onClose} style={styles.button}>
-              <Text style={styles.buttonText}>Cancelar</Text>
+            {reminder?.id && (
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => onDelete(reminder.id || 0)}
+              >
+                <Text style={styles.deleteButtonText}>Excluir lembrete</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
+              <Text style={styles.cancelButtonText}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -222,23 +231,42 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 15,
+    gap: 20,
   },
   button: {
     backgroundColor: "#005b96",
-    padding: 10,
+    padding: 15,
     borderRadius: 5,
-    marginBottom: 10,
     alignItems: "center",
   },
   buttonText: {
     color: "white",
     fontWeight: "bold",
   },
+  cancelButton: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#005b96",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#005b96",
+    fontWeight: "bold",
+  },
+  deleteButton: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "red",
+    borderRadius: 5,
+    alignItems: "center",
+  },
   deleteButtonText: {
     color: "red",
     fontWeight: "bold",
     fontSize: 14,
-    marginBottom: 10,
     textAlign: "center",
   },
 });

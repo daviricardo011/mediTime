@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   View,
@@ -9,74 +9,43 @@ import {
 import Header from "../../components/Header";
 import SwitchTabs from "../../components/SwitchTabs";
 import ReminderCard from "../../components/ReminderCard";
-import ReminderModal from "../../components/ReminderModal"; // Certifique-se de importar o modal
-import FooterMenu from "../../components/FooterMenu";
+import ReminderModal from "../../components/ReminderModal";
 import moment from "moment";
-
-interface Conta {
-  description: string;
-  amount: string;
-  date: string; // Deve ser no formato DD/MM/AAAA
-  status: "paid" | "unpaid";
-}
-
-interface Remedio {
-  description: string;
-  date: string; // Deve ser no formato DD/MM/AAAA
-  time: string;
-  status: "taken" | "missed" | "waiting";
-}
-
-// Exemplo de dados para contas
-const contas: Conta[] = [
-  {
-    description: "Energia",
-    amount: "120.00",
-    date: "19/10/2024",
-    status: "paid",
-  },
-  {
-    description: "Água",
-    amount: "45.00",
-    date: "20/10/2024",
-    status: "unpaid",
-  },
-  {
-    description: "Internet",
-    amount: "89.00",
-    date: "19/12/2024",
-    status: "unpaid",
-  },
-];
-
-const remedios: Remedio[] = [
-  {
-    description: "Vitamina D",
-    date: "19/10/2024",
-    time: "12:00",
-    status: "waiting",
-  },
-  {
-    description: "Aspirina",
-    date: "20/10/2024",
-    time: "00:00",
-    status: "missed",
-  },
-  {
-    description: "Antibiótico",
-    date: "19/10/2024",
-    time: "18:00",
-    status: "taken",
-  },
-];
+import { useReminderStorage } from "../../hooks/useReminderStorage";
+import { Reminder } from "../../types";
 
 const HomeScreen = () => {
+  const { getList, removeFromList, updateItem } = useReminderStorage();
   const [selectedTab, setSelectedTab] = useState("Contas");
-  const [modalVisible, setModalVisible] = useState(false);
+  const [reminderModal, setReminderModal] = useState(false);
   const [currentReminder, setCurrentReminder] = useState<any>(null);
+  const [medicines, setMedicines] = useState<Reminder[]>([]);
+  const [bills, setBills] = useState<Reminder[]>([]);
+
+  const handleFetchReminders = async () => {
+    const reminders = await getList();
+    console.log("storage");
+    console.log(reminders);
+    const med: Reminder[] = [];
+    const b: Reminder[] = [];
+
+    reminders.forEach((reminder) => {
+      if (reminder.type === "remedio") {
+        med.push(reminder);
+      } else {
+        b.push(reminder);
+      }
+    });
+    setMedicines(med);
+    setBills(b);
+  };
+
+  useEffect(() => {
+    handleFetchReminders();
+  }, [reminderModal]);
 
   // Função para ordenar os itens pelo mais próximo
-  const sortByDate = (a: Conta | Remedio, b: Conta | Remedio): number => {
+  const sortByDate = (a: Reminder, b: Reminder): number => {
     if ("amount" in a && "amount" in b) {
       const aDate = moment(a.date, "DD/MM/YYYY");
       const bDate = moment(b.date, "DD/MM/YYYY");
@@ -90,9 +59,9 @@ const HomeScreen = () => {
     return 0;
   };
 
-  const handleOpenModal = (reminder: Conta | Remedio | null) => {
+  const handleOpenModal = (reminder: Reminder | null) => {
     setCurrentReminder(reminder);
-    setModalVisible(true);
+    setReminderModal(true);
   };
 
   return (
@@ -110,39 +79,40 @@ const HomeScreen = () => {
       </View>
 
       {selectedTab === "Contas"
-        ? contas.sort(sortByDate).map((conta, index) => (
+        ? bills.sort(sortByDate).map((debit, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => handleOpenModal(conta)}
+              onPress={() => handleOpenModal(debit)}
             >
               <ReminderCard
                 type="conta"
-                description={conta.description}
-                amount={conta.amount}
-                date={conta.date} // Exibindo no formato DD/MM/AAAA
-                status={conta.status}
+                title={debit.title}
+                amount={debit.amount}
+                date={debit.date}
+                status={debit.status}
               />
             </TouchableOpacity>
           ))
-        : remedios.sort(sortByDate).map((remedio, index) => (
+        : medicines.sort(sortByDate).map((medicine, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => handleOpenModal(remedio)}
+              onPress={() => handleOpenModal(medicine)}
             >
               <ReminderCard
                 type="remedio"
-                description={remedio.description}
-                date={remedio.date} // Exibindo no formato DD/MM/AAAA
-                time={remedio.time}
-                status={remedio.status}
+                title={medicine.title}
+                date={medicine.date}
+                time={medicine.time}
+                status={medicine.status}
               />
             </TouchableOpacity>
           ))}
 
       <ReminderModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        visible={reminderModal}
+        onClose={() => setReminderModal(false)}
         reminder={currentReminder}
+        onDelete={(id: number) => removeFromList(id)}
       />
     </ScrollView>
   );

@@ -3,24 +3,16 @@ import { View, Text, StyleSheet } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import moment from "moment";
 import "moment/locale/pt-br";
-
-interface ReminderCardProps {
-  type: "conta" | "remedio";
-  description: string;
-  amount?: string; // Apenas para contas
-  date: string; // Deve ser no formato DD/MM/AAAA
-  time?: string; // Apenas para remédios
-  status: "paid" | "unpaid" | "taken" | "missed" | "waiting";
-}
+import { Reminder } from "../../types";
 
 const ReminderCard = ({
   type,
-  description,
+  title,
   amount,
   date,
   time,
   status,
-}: ReminderCardProps) => {
+}: Reminder) => {
   moment.locale("pt-br");
 
   const isOverdue = moment().isAfter(
@@ -29,34 +21,54 @@ const ReminderCard = ({
   const isRemedy = type === "remedio";
 
   const backgroundColor =
-    (isOverdue && !isRemedy && status === "unpaid") ||
-    (isOverdue && isRemedy && status !== "taken")
+    (isOverdue && !isRemedy && status === "missed") ||
+    (isOverdue && isRemedy && status !== "completed")
       ? "#ffe6e6"
       : "#fff";
 
-  const iconColor = isRemedy
-    ? status === "taken"
-      ? "#005b96"
-      : "#d32f2f"
-    : status === "paid"
-    ? "#388e3c"
-    : "#d32f2f";
+  const iconColor =
+    status === "waiting"
+      ? "#e99402"
+      : isRemedy
+      ? status === "completed"
+        ? "#005b96"
+        : "#d32f2f"
+      : status === "completed"
+      ? "#388e3c"
+      : "#d32f2f";
 
   const statusText = isRemedy
-    ? status === "taken"
-      ? "Remédio tomado"
-      : "Remédio pendente"
-    : status === "paid"
-    ? "Conta paga"
-    : "Conta em aberto";
+    ? status === "completed"
+      ? "Tomado"
+      : "Pendente"
+    : status === "completed"
+    ? "Paga"
+    : "Aberta";
 
+  const formatToMoney = (value: string | undefined) => {
+    if (value === null || value === undefined || value.trim() === "") {
+      return "R$ 0,00";
+    }
+
+    const sanitizedValue = value.replace(/\./g, "").replace(",", ".");
+
+    const numberValue = parseFloat(sanitizedValue);
+    if (isNaN(numberValue)) {
+      return "R$ 0,00";
+    }
+
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(numberValue);
+  };
   return (
-    <View style={[styles.ReminderCard, { backgroundColor: backgroundColor }]}>
+    <View style={[styles.ReminderCard, { backgroundColor }]}>
       <View style={styles.transactionDetails}>
         <FontAwesome
           name={
             isRemedy
-              ? status === "taken"
+              ? status === "completed"
                 ? "check-circle"
                 : "times-circle"
               : "money"
@@ -65,25 +77,17 @@ const ReminderCard = ({
           color={iconColor}
         />
         <View style={styles.transactionInfo}>
-          <Text
-            style={[
-              styles.descriptionText,
-              {
-                color:
-                  status !== "paid" && status !== "taken" ? "#d32f2f" : "#333",
-              },
-            ]}
-          >
-            {description}
+          <Text style={[styles.descriptionText, { color: iconColor }]}>
+            {title}
           </Text>
           <Text style={styles.transactionAmount}>
-            {isRemedy ? time : `$${amount}`}
+            {isRemedy ? time : formatToMoney(amount)}
           </Text>
         </View>
       </View>
-      <View>
+      <View style={styles.rightSide}>
         <Text style={styles.dateText}>
-          {moment(date, "DD/MM/YYYY").format("DD [de] MMMM")}{" "}
+          {moment(date, "DD/MM/YYYY").format("DD [de] MMMM")}
         </Text>
         <Text style={[styles.statusText, { color: iconColor }]}>
           {statusText}
@@ -120,6 +124,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginTop: 4,
+  },
+  rightSide: {
+    alignItems: "flex-end",
   },
   dateText: {
     fontSize: 14,
