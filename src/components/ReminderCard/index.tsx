@@ -45,23 +45,6 @@ const ReminderCard = ({
     ? "Paga"
     : "Aberta";
 
-  const formatToMoney = (value: string | undefined) => {
-    if (value === null || value === undefined || value.trim() === "") {
-      return "R$ 0,00";
-    }
-
-    const sanitizedValue = value.replace(/\./g, "").replace(",", ".");
-
-    const numberValue = parseFloat(sanitizedValue);
-    if (isNaN(numberValue)) {
-      return "R$ 0,00";
-    }
-
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(numberValue);
-  };
   return (
     <View style={[styles.ReminderCard, { backgroundColor }]}>
       <View style={styles.transactionDetails}>
@@ -81,7 +64,7 @@ const ReminderCard = ({
             {title}
           </Text>
           <Text style={styles.transactionAmount}>
-            {isRemedy ? time : formatToMoney(amount)}
+            {isRemedy ? time : amount}
           </Text>
         </View>
       </View>
