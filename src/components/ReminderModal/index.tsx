@@ -57,6 +57,28 @@ const ReminderModal = ({
     }
   }, [reminder]);
 
+  const isValidDate = (dateString: string): boolean => {
+    const parts = dateString.split("/");
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+
+    const date = new Date(year, month, day);
+    return (
+      date.getDate() === day &&
+      date.getMonth() === month &&
+      date.getFullYear() === year
+    );
+  };
+
+  const isValidTime = (timeString: string): boolean => {
+    const parts = timeString.split(":");
+    const hour = parseInt(parts[0], 10);
+    const minute = parseInt(parts[1], 10);
+
+    return hour >= 0 && hour < 24 && minute >= 0 && minute < 60;
+  };
+
   const handleSave = async () => {
     if (
       !title ||
@@ -66,6 +88,15 @@ const ReminderModal = ({
       (type === "conta" && !amount)
     ) {
       Alert.alert("Aviso!", "Todos os campos são obrigatórios.");
+      return;
+    }
+    if (!isValidDate(date)) {
+      Alert.alert("Aviso!", "Data inválida. Use o formato DD/MM/AAAA.");
+      return;
+    }
+
+    if (type === "remedio" && !isValidTime(time)) {
+      Alert.alert("Aviso!", "Hora inválida. Use o formato HH:MM.");
       return;
     }
 
