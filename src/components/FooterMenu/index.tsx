@@ -3,22 +3,19 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation, useNavigationState } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
-import { RootStackParamList } from "../../navigation/types"; // Importando o tipo
+import { RootStackParamList } from "../../navigation/types";
 import {
   CompositeNavigationProp,
   NavigationProp,
 } from "@react-navigation/native";
 
-// Tipando a navegação
 type FooterMenuNavigationProp = CompositeNavigationProp<
   NavigationProp<RootStackParamList>,
   NavigationProp<Record<string, object | undefined>>
 >;
 
 const routes: { name: keyof RootStackParamList; icon: string }[] = [
-  { name: "Home", icon: "home" },
-  { name: "Another", icon: "bar-chart" },
-  // Adicione mais rotas conforme necessário
+  { name: "Tela Inicial", icon: "home" },
 ];
 
 const FooterMenu = () => {
@@ -28,13 +25,15 @@ const FooterMenu = () => {
   return (
     <View style={styles.container}>
       {routes.map((route) => {
-        const isActive = state?.routes[state.index].name === route.name;
-        const iconColor = isActive ? "#7de3ea" : "gray";
+        const isActive =
+          state?.routes[state.index].name === route.name ||
+          (!state?.routes[state.index].name && route.name === "Tela Inicial");
+        const iconColor = isActive ? "#005b96" : "gray";
 
         return (
           <TouchableOpacity
             key={route.name}
-            onPress={() => navigation.navigate(route.name)} // Certifique-se de que `route.name` é do tipo correto
+            onPress={() => navigation.navigate(route.name)}
             style={styles.menuItem}
           >
             <FontAwesome name={route.icon as any} size={25} color={iconColor} />
@@ -60,10 +59,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
   },
   menuItem: {
-    alignItems: "center", // Alinhando ícones e texto no centro
+    alignItems: "center",
   },
   menuText: {
-    marginTop: 5, // Espaçamento entre o ícone e o texto
+    marginTop: 5,
   },
 });
 

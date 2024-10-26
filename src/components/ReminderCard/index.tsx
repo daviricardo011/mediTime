@@ -2,16 +2,15 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import moment from "moment";
-import "moment/locale/pt-br"; // Importando a localidade pt-br
+import "moment/locale/pt-br";
 
 interface ReminderCardProps {
   type: "conta" | "remedio";
   description: string;
   amount?: string; // Apenas para contas
-  date: string;
+  date: string; // Deve ser no formato DD/MM/AAAA
   time?: string; // Apenas para remédios
   status: "paid" | "unpaid" | "taken" | "missed" | "waiting";
-  isLate?: boolean;
 }
 
 const ReminderCard = ({
@@ -22,20 +21,37 @@ const ReminderCard = ({
   time,
   status,
 }: ReminderCardProps) => {
-  // Definindo a localidade para pt-BR
   moment.locale("pt-br");
 
-  const isOverdue = moment().isAfter(moment(date + (time ? ` ${time}` : "")));
+  const isOverdue = moment().isAfter(
+    moment(date, "DD/MM/YYYY").add(time ? 1 : 0, "hours")
+  );
   const isRemedy = type === "remedio";
-  const backgroundColor = isOverdue && !isRemedy ? "#ffcccc" : "#fff";
+
+  const backgroundColor =
+    (isOverdue && !isRemedy && status === "unpaid") ||
+    (isOverdue && isRemedy && status !== "taken")
+      ? "#ffe6e6"
+      : "#fff";
+
+  const iconColor = isRemedy
+    ? status === "taken"
+      ? "#005b96"
+      : "#d32f2f"
+    : status === "paid"
+    ? "#388e3c"
+    : "#d32f2f";
+
+  const statusText = isRemedy
+    ? status === "taken"
+      ? "Remédio tomado"
+      : "Remédio pendente"
+    : status === "paid"
+    ? "Conta paga"
+    : "Conta em aberto";
 
   return (
-    <View
-      style={[
-        styles.ReminderCard,
-        { backgroundColor: isOverdue ? "#ffcccc" : backgroundColor },
-      ]}
-    >
+    <View style={[styles.ReminderCard, { backgroundColor: backgroundColor }]}>
       <View style={styles.transactionDetails}>
         <FontAwesome
           name={
@@ -45,19 +61,34 @@ const ReminderCard = ({
                 : "times-circle"
               : "money"
           }
-          size={20}
-          color={
-            isRemedy ? (status === "taken" ? "#7de3ea" : "#ff7272") : "#333"
-          }
+          size={28}
+          color={iconColor}
         />
         <View style={styles.transactionInfo}>
-          <Text>{description}</Text>
+          <Text
+            style={[
+              styles.descriptionText,
+              {
+                color:
+                  status !== "paid" && status !== "taken" ? "#d32f2f" : "#333",
+              },
+            ]}
+          >
+            {description}
+          </Text>
           <Text style={styles.transactionAmount}>
             {isRemedy ? time : `$${amount}`}
           </Text>
         </View>
       </View>
-      <Text>{moment(date).format("DD [de] MMM")}</Text>
+      <View>
+        <Text style={styles.dateText}>
+          {moment(date, "DD/MM/YYYY").format("DD [de] MMMM")}{" "}
+        </Text>
+        <Text style={[styles.statusText, { color: iconColor }]}>
+          {statusText}
+        </Text>
+      </View>
     </View>
   );
 };
@@ -79,10 +110,25 @@ const styles = StyleSheet.create({
   transactionInfo: {
     marginLeft: 10,
   },
-  transactionAmount: {
-    fontWeight: "bold",
+  descriptionText: {
     fontSize: 16,
+    fontWeight: "bold",
     color: "#333",
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 4,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

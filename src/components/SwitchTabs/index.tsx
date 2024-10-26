@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 interface SwitchTabsProps {
@@ -13,7 +13,14 @@ const SwitchTabs = ({ selectedTab, onSelectTab }: SwitchTabsProps) => {
         style={[styles.tabButton, selectedTab === "Contas" && styles.activeTab]}
         onPress={() => onSelectTab("Contas")}
       >
-        <Text style={styles.tabText}>Contas</Text>
+        <Text
+          style={[
+            styles.tabText,
+            selectedTab === "Contas" && styles.activeTabText,
+          ]}
+        >
+          Contas
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -22,7 +29,14 @@ const SwitchTabs = ({ selectedTab, onSelectTab }: SwitchTabsProps) => {
         ]}
         onPress={() => onSelectTab("Remédios")}
       >
-        <Text style={styles.tabText}>Remédios</Text>
+        <Text
+          style={[
+            styles.tabText,
+            selectedTab === "Remédios" && styles.activeTabText,
+          ]}
+        >
+          Remédios
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -40,13 +54,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 20,
     backgroundColor: "#f0f0f0",
+    marginHorizontal: 5,
   },
   activeTab: {
-    backgroundColor: "#7de3ea",
+    backgroundColor: "#005b96",
   },
   tabText: {
     color: "#333",
     fontWeight: "bold",
+  },
+  activeTabText: {
+    color: "#fff",
   },
 });
 

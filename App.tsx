@@ -16,19 +16,11 @@ const App = () => {
       <View style={styles.container}>
         <Tab.Navigator
           screenOptions={{
-            headerShown: false, // Ocultar o cabeçalho padrão
-            tabBarStyle: { display: "none" }, // Ocultar a barra de abas padrão
+            headerShown: false,
+            tabBarStyle: { display: "none" },
           }}
         >
-          <Tab.Screen name="Home" component={HomeScreen} />
-          <Tab.Screen
-            name="Another"
-            component={() => (
-              <View>
-                <Text>TESTE DE OUTRA PAGINA</Text>
-              </View>
-            )}
-          />
+          <Tab.Screen name="Tela Inicial" component={HomeScreen} />
         </Tab.Navigator>
         <FooterMenu />
       </View>
