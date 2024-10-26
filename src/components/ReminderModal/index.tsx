@@ -11,6 +11,7 @@ import { Picker } from "@react-native-picker/picker";
 import { TextInputMask } from "react-native-masked-text";
 import { useReminderStorage } from "../../hooks/useReminderStorage";
 import { Reminder } from "../../types";
+import { Alert } from "react-native";
 
 interface ReminderModalProps {
   visible: boolean;
@@ -57,6 +58,17 @@ const ReminderModal = ({
   }, [reminder]);
 
   const handleSave = async () => {
+    if (
+      !title ||
+      !date ||
+      !type ||
+      (type === "remedio" && !time) ||
+      (type === "conta" && !amount)
+    ) {
+      Alert.alert("Aviso!", "Todos os campos são obrigatórios.");
+      return;
+    }
+
     if (!reminder?.id) {
       await addToList({
         id: Date.now(),
@@ -106,33 +118,29 @@ const ReminderModal = ({
               {reminder ? "Gerenciar lembrete" : "Cadastrar novo lembrete"}
             </Text>
 
-            <Text style={styles.label}>Título do lembrete</Text>
+            <Text style={styles.label}>Título do lembrete*</Text>
             <TextInput
               style={styles.input}
               placeholder="Título do lembrete"
               value={title}
               onChangeText={setTitle}
             />
-            {!reminder && (
-              <>
-                <Text style={styles.label}>Tipo</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={type}
-                    onValueChange={(itemValue) => setType(itemValue)}
-                    style={styles.picker}
-                  >
-                    <Picker.Item label={"Toque para selecionar"} value={null} />
-                    <Picker.Item label="Conta" value="conta" />
-                    <Picker.Item label="Remédio" value="remedio" />
-                  </Picker>
-                </View>
-              </>
-            )}
+            <Text style={styles.label}>Tipo*</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={type}
+                onValueChange={(itemValue) => setType(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label={"Toque para selecionar"} value={null} />
+                <Picker.Item label="Conta" value="conta" />
+                <Picker.Item label="Remédio" value="remedio" />
+              </Picker>
+            </View>
 
             {!!type && (
               <>
-                <Text style={styles.label}>Data (DD/MM/AAAA)</Text>
+                <Text style={styles.label}>Data (DD/MM/AAAA)*</Text>
                 <TextInputMask
                   style={styles.input}
                   value={date}
@@ -145,23 +153,33 @@ const ReminderModal = ({
 
                 {type === "remedio" && (
                   <>
-                    <Text style={styles.label}>Hora (HH:MM)</Text>
-                    <TextInput
+                    <Text style={styles.label}>Hora (HH:MM)*</Text>
+                    <TextInputMask
                       style={styles.input}
                       value={time}
                       onChangeText={setTime}
+                      type={"datetime"}
+                      options={{
+                        format: "HH:mm",
+                      }}
                     />
                   </>
                 )}
 
                 {type === "conta" && (
                   <>
-                    <Text style={styles.label}>Valor (R$)</Text>
-                    <TextInput
+                    <Text style={styles.label}>Valor (R$)*</Text>
+                    <TextInputMask
                       style={styles.input}
                       value={amount}
                       onChangeText={setAmount}
-                      keyboardType="numeric"
+                      type={"money"}
+                      options={{
+                        precision: 2,
+                        separator: ",",
+                        delimiter: ".",
+                        unit: "R$ ",
+                      }}
                     />
                   </>
                 )}
@@ -309,17 +327,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 15,
     borderWidth: 1,
-    borderColor: "#a70000",
+    borderColor: "red",
     borderRadius: 5,
     alignItems: "center",
   },
   deleteButtonText: {
-    color: "#a70000",
+    color: "red",
+    fontWeight: "bold",
+  },
+  cancelButton: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#333",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#333",
     fontWeight: "bold",
   },
   confirmModalContent: {
-    width: "90%",
-    maxWidth: 300,
+    width: "80%",
+    maxWidth: 350,
     padding: 20,
     backgroundColor: "#f5f5f5",
     borderRadius: 10,
@@ -328,34 +358,24 @@ const styles = StyleSheet.create({
   confirmTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 20,
     textAlign: "center",
+    marginBottom: 20,
   },
   confirmButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     width: "100%",
-    gap: 20,
   },
   confirmButton: {
-    backgroundColor: "#a70000",
-    padding: 15,
+    backgroundColor: "#ff4d4d",
+    padding: 10,
     borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
     alignItems: "center",
   },
   confirmButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  cancelButton: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderWidth: 1,
-    borderColor: "#005b96",
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#005b96",
+    color: "white",
     fontWeight: "bold",
   },
 });
