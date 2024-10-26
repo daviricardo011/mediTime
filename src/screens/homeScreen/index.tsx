@@ -13,6 +13,7 @@ import ReminderModal from "../../components/ReminderModal";
 import moment from "moment";
 import { useReminderStorage } from "../../hooks/useReminderStorage";
 import { Reminder } from "../../types";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const HomeScreen = () => {
   const { getList, NotificationModal } = useReminderStorage();
@@ -63,7 +64,7 @@ const HomeScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header title="Lembretes" onAdd={() => handleOpenModal(null)} />
       <SwitchTabs
         selectedTab={selectedTab}
@@ -76,35 +77,37 @@ const HomeScreen = () => {
         </Text>
       </View>
 
-      {selectedTab === "Contas"
-        ? bills.sort(sortByDate).map((debit, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleOpenModal(debit)}
-            >
-              <ReminderCard
-                type="conta"
-                title={debit.title}
-                amount={debit.amount}
-                date={debit.date}
-                status={debit.status}
-              />
-            </TouchableOpacity>
-          ))
-        : medicines.sort(sortByDate).map((medicine, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleOpenModal(medicine)}
-            >
-              <ReminderCard
-                type="remedio"
-                title={medicine.title}
-                date={medicine.date}
-                time={medicine.time}
-                status={medicine.status}
-              />
-            </TouchableOpacity>
-          ))}
+      <ScrollView style={styles.cardList}>
+        {selectedTab === "Contas"
+          ? bills.sort(sortByDate).map((debit, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleOpenModal(debit)}
+              >
+                <ReminderCard
+                  type="conta"
+                  title={debit.title}
+                  amount={debit.amount}
+                  date={debit.date}
+                  status={debit.status}
+                />
+              </TouchableOpacity>
+            ))
+          : medicines.sort(sortByDate).map((medicine, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleOpenModal(medicine)}
+              >
+                <ReminderCard
+                  type="remedio"
+                  title={medicine.title}
+                  date={medicine.date}
+                  time={medicine.time}
+                  status={medicine.status}
+                />
+              </TouchableOpacity>
+            ))}
+      </ScrollView>
 
       <ReminderModal
         visible={reminderModal}
@@ -114,7 +117,7 @@ const HomeScreen = () => {
       />
 
       {NotificationModal}
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -122,6 +125,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  cardList: {
+    maxHeight: "65%",
   },
   transactionHeader: {
     flexDirection: "row",
