@@ -40,7 +40,7 @@ const ReminderModal = ({
   const [isConfirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   useEffect(() => {
-    if (reminder) {
+    if (reminder && visible) {
       setTitle(reminder.title);
       setDate(reminder.date);
       setType(reminder.amount ? "conta" : "remedio");
@@ -55,7 +55,7 @@ const ReminderModal = ({
       setTime("");
       setStatus(null);
     }
-  }, [reminder]);
+  }, [reminder, visible]);
 
   const isValidDate = (dateString: string): boolean => {
     const parts = dateString.split("/");
@@ -91,12 +91,18 @@ const ReminderModal = ({
       return;
     }
     if (!isValidDate(date)) {
-      Alert.alert("Aviso!", "Data inválida. Use o formato DD/MM/AAAA.");
+      Alert.alert(
+        "Aviso!",
+        "Data inválida. Use o formato DD/MM/AAAA. Exemplo: 12/10/2024."
+      );
       return;
     }
 
     if (type === "remedio" && !isValidTime(time)) {
-      Alert.alert("Aviso!", "Hora inválida. Use o formato HH:MM.");
+      Alert.alert(
+        "Aviso!",
+        "Hora inválida. Use o formato HH:MM. Exemplo: 01:25."
+      );
       return;
     }
 
@@ -132,6 +138,7 @@ const ReminderModal = ({
     if (reminder?.id) {
       await removeFromList(reminder.id);
       handleStorageChange();
+      onClose();
     }
     setConfirmDeleteVisible(false);
   };
@@ -152,7 +159,7 @@ const ReminderModal = ({
             <Text style={styles.label}>Título do lembrete*</Text>
             <TextInput
               style={styles.input}
-              placeholder="Título do lembrete"
+              placeholder="Digite aqui"
               value={title}
               onChangeText={setTitle}
             />
@@ -175,6 +182,7 @@ const ReminderModal = ({
                 <TextInputMask
                   style={styles.input}
                   value={date}
+                  placeholder="00/00/0000"
                   onChangeText={setDate}
                   type={"datetime"}
                   options={{
@@ -188,6 +196,7 @@ const ReminderModal = ({
                     <TextInputMask
                       style={styles.input}
                       value={time}
+                      placeholder="00:00"
                       onChangeText={setTime}
                       type={"datetime"}
                       options={{
@@ -399,11 +408,10 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: "#ff4d4d",
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
-    flex: 1,
-    marginRight: 10,
-    alignItems: "center",
+    justifyContent: "center",
   },
   confirmButtonText: {
     color: "white",
